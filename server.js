@@ -4,8 +4,8 @@ const fs = require('fs');
 const db = require('./db/db.json');
 
 // Method for generating unique ids
-const uuid = require('./helpers/uuid');
 const { randomUUID } = require('crypto');
+const { parse } = require('path');
 
 // Heroku or localhost
 const PORT = process.env.PORT || 3001;
@@ -31,7 +31,7 @@ app.get('/api/notes', (req, res) => {
 
     console.info(`${req.method} request received to notes`);
 
-    fs.readFile('./db/db.json', 'utf8', (err, data)=>{
+    fs.readFile('./db/db.json', 'utf8', (err, data) => {
         const parsedNote = JSON.parse(data);
         res.json(parsedNote);
     });
@@ -47,7 +47,7 @@ app.post('/api/notes', (req, res) => {
         const newNote = {
             title,
             text,
-            note_id: randomUUID()
+            id: randomUUID()
         };
 
 
@@ -60,16 +60,16 @@ app.post('/api/notes', (req, res) => {
 
                 fs.writeFile(
                     './db/db.json',
-                     JSON.stringify(parsedNote, null, 4), 
-                     (writeErr) => 
-                     writeErr ? 
-                     console.error(writeErr): 
-                     console.info('Succesfully updated notes!'
-                     ));
+                    JSON.stringify(parsedNote, null, 4),
+                    (writeErr) =>
+                        writeErr ?
+                            console.error(writeErr) :
+                            console.info('Succesfully updated notes!'
+                            ));
             }
         });
 
-        const response ={
+        const response = {
             status: 'success',
             body: newNote,
         };
@@ -82,5 +82,40 @@ app.post('/api/notes', (req, res) => {
     }
 })
 
-app.listen(PORT, ()=>
-console.log(`App listening at http://localhost:${PORT} 🚀`))
+app.delete('/api/notes/:id', (req, res) => {
+    console.log("delete was pressed!")
+    const { id } = req.params;
+
+
+    fs.readFile('./db/db.json', 'utf8', (err, data) => {
+        if (err) {
+            console.error(err);
+        } else {
+            let preNotes = JSON.parse(data);
+        
+            let notes = preNotes.filter((note)=>{ 
+            if(note.id!==id){
+                return note
+            }else{
+            return
+            }
+        
+        });
+
+
+            fs.writeFile(
+                './db/db.json',
+                JSON.stringify(notes, null, 4),
+                (writeErr) =>
+                    writeErr ?
+                        console.error(writeErr) :
+                        console.info('Succesfully updated notes!'
+            ));
+            res.status(201)
+
+        }
+    });
+})
+
+app.listen(PORT, () =>
+    console.log(`App listening at http://localhost:${PORT} 🚀`))
